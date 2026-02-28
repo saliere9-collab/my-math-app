@@ -31,7 +31,7 @@ try:
 except Exception:
     api_key = st.sidebar.text_input("Gemini API 키를 입력하세요", type="password")
 
-st.title("🎓 내 손안의 AI 수학 선생님")
+st.title("🎓 AI 수학 선생님")
 
 # --- 4. 메인 화면 ---
 col1, col2 = st.columns([2, 1])
@@ -93,3 +93,4 @@ with col2:
             with st.expander(f"📌 문제 기록 {len(st.session_state.history) - i}"):
                 st.image(item["image"], use_column_width=True)
                 st.markdown(item["solution"])
+
