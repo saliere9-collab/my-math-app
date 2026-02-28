@@ -23,7 +23,7 @@ else:
     if not api_key:
         st.sidebar.warning("API 키를 입력해야 작동합니다.")
 
-st.title("🎓 내 손안의 AI 수학 선생님")
+st.title("🎓 AI 수학 선생님")
 st.write("문제를 찍거나 앨범에서 선택하면 해설해 드려요!")
 
 # --- 4. 메인 화면 구성 (왼쪽: 입력 / 오른쪽: 기록) ---
@@ -91,3 +91,4 @@ with col2:
                 st.image(item["image"], use_column_width=True)
 
                 st.markdown(item["solution"])
+
