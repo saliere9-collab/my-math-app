@@ -83,48 +83,57 @@ with col1:
     # --- 🤖 문제 풀기 실행 ---
     if final_image and api_key:
         if st.button("✨ 선생님! 이 영역 해설해주세요", type="primary", use_container_width=True):
+            # 편집된 이미지의 데이터를 체크용으로 변환
             img_bytes = io.BytesIO()
             final_image.save(img_bytes, format='PNG')
             current_img_data = img_bytes.getvalue()
             
-            # 중복 실행 방지
+            # 중복 실행 방지 체크
             if st.session_state.last_processed_image != current_img_data:
                 with st.spinner("🔍 선생님이 문제를 분석 중..."):
                     try:
-                     client = genai.Client(api_key=api_key)
-                    # 명확하고 간결한 답변을 위한 프롬프트 수정
-                    prompt = """
-                    너는 명쾌하고 핵심만 찌르는 일타 수학 선생님이야. 
-                    사진 속 문제를 분석해서 다음 양식에 맞춰 아주 간결하게 설명해줘.
-                    
-                    1. **핵심 개념**: 문제를 푸는 데 필요한 핵심 공식이나 원리 (한 줄 요약)
-                    2. **풀이 과정**: 군더더기 없이 단계별로 번호를 매겨서 설명 (최대 4단계)
-                    3. **최종 정답**: 결과값을 명확하게 강조
-                    
-                    * 답변은 친절하되, 장황한 설명은 생략할 것.
-                    """
-                    
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=[prompt, final_image]
+                        # 1. Gemini 클라이언트 연결
+                        client = genai.Client(api_key=api_key)
+                        
+                        # 2. 핵심만 집어주는 일타강사 주문서(프롬프트)
+                        prompt = """
+                        너는 핵심만 찌르는 명쾌한 수학 선생님이야. 
+                        사진 속 문제를 분석해서 다음 양식에 맞춰 아주 간결하게 설명해줘.
+                        
+                        1. **핵심 개념**: 문제 풀이에 필요한 공식이나 원리 (한 줄 요약)
+                        2. **풀이 과정**: 단계별로 번호를 매겨서 설명 (최대 4단계)
+                        3. **최종 정답**: 결과값을 명확하게 강조
+                        
+                        * 답변은 친절하되, 장황한 설명은 절대 생략할 것.
+                        """
+                        
+                        # 3. AI에게 분석 요청
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=[prompt, final_image]
+                        )
+                        
+                        # 4. 결과 저장
                         st.session_state.current_solution = response.text
                         st.session_state.current_image = final_image
                         st.session_state.last_processed_image = current_img_data
+                        
                     except Exception as e:
+                        # 이 부분이 사라졌거나 들여쓰기가 틀리면 에러가 납니다!
                         st.error(f"오류가 발생했습니다: {e}")
 
-    # 결과 출력
+    # --- 결과 출력 영역 ---
     if st.session_state.current_solution:
         st.divider()
         st.subheader("💡 해설지")
         st.markdown(st.session_state.current_solution)
         
-        if st.button("💾 오답노트 저장", use_container_width=True):
+        if st.button("💾 이 해설을 오답노트에 저장", use_container_width=True):
             st.session_state.history.append({
                 "image": st.session_state.current_image,
                 "solution": st.session_state.current_solution
             })
-            st.toast("저장 완료! 🎉")
+            st.toast("오답노트에 저장 완료! 🎉")
 
 with col2:
     st.write("### 📚 나의 오답노트")
@@ -135,6 +144,7 @@ with col2:
             with st.expander(f"📌 문제 {len(st.session_state.history) - i}"):
                 st.image(item["image"], use_column_width=True)
                 st.markdown(item["solution"])
+
 
 
 
