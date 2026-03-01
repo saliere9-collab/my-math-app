@@ -91,11 +91,22 @@ with col1:
             if st.session_state.last_processed_image != current_img_data:
                 with st.spinner("🔍 선생님이 문제를 분석 중..."):
                     try:
-                        client = genai.Client(api_key=api_key)
-                        response = client.models.generate_content(
-                            model='gemini-2.5-flash',
-                            contents=["너는 친절한 수학 선생님이야. 이 문제의 풀이 과정을 단계별로 자세히 설명하고 정답을 알려줘.", final_image]
-                        )
+                     client = genai.Client(api_key=api_key)
+                    # 명확하고 간결한 답변을 위한 프롬프트 수정
+                    prompt = """
+                    너는 명쾌하고 핵심만 찌르는 일타 수학 선생님이야. 
+                    사진 속 문제를 분석해서 다음 양식에 맞춰 아주 간결하게 설명해줘.
+                    
+                    1. **핵심 개념**: 문제를 푸는 데 필요한 핵심 공식이나 원리 (한 줄 요약)
+                    2. **풀이 과정**: 군더더기 없이 단계별로 번호를 매겨서 설명 (최대 4단계)
+                    3. **최종 정답**: 결과값을 명확하게 강조
+                    
+                    * 답변은 친절하되, 장황한 설명은 생략할 것.
+                    """
+                    
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=[prompt, final_image]
                         st.session_state.current_solution = response.text
                         st.session_state.current_image = final_image
                         st.session_state.last_processed_image = current_img_data
@@ -124,6 +135,7 @@ with col2:
             with st.expander(f"📌 문제 {len(st.session_state.history) - i}"):
                 st.image(item["image"], use_column_width=True)
                 st.markdown(item["solution"])
+
 
 
 
