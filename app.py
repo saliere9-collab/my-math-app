@@ -2,6 +2,7 @@ import streamlit as st
 from google import genai
 import PIL.Image
 from streamlit_cropper import st_cropper # 새로운 라이브러리 가져오기
+import io
 
 # --- 1. 세션 상태 초기화 ---
 if 'history' not in st.session_state:
@@ -108,5 +109,6 @@ with col2:
                 
 # io 라이브러리가 필요해서 맨 위에 추가해줍니다 (코드가 복잡해 보여서 설명만 드리고 코드 내에 포함시켰습니다)
 import io
+
 
 
