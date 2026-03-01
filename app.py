@@ -1,7 +1,7 @@
 import streamlit as st
 from google import genai
 import PIL.Image
-import PIL.ImageOps  # 사진 방향을 바로잡기 위해 추가
+import PIL.ImageOps
 from streamlit_cropper import st_cropper
 import io
 
@@ -40,10 +40,10 @@ with col1:
         # 사진 불러오기
         img = PIL.Image.open(uploaded_file)
         
-        # [수정 1] 핸드폰 사진의 돌아간 방향을 자동으로 바로잡기
+        # 1. 자동 방향 수정
         img = PIL.ImageOps.exif_transpose(img)
         
-        # [수정 2] 회전 버튼을 편집창 바로 위로 배치 (모바일에서 누르기 좋게)
+        # 2. 회전 조절
         st.write("#### 🔄 사진 방향 조절")
         r_col1, r_col2, r_col3 = st.columns(3)
         if r_col1.button("↩️ 왼쪽 회전"):
@@ -53,26 +53,32 @@ with col1:
         if r_col3.button("🧹 초기화"):
             st.session_state.rotation = 0
             
-        # 회전 적용
         if st.session_state.rotation != 0:
             img = img.rotate(st.session_state.rotation, expand=True)
 
-        # [수정 3] 편집창이 화면 밖으로 나가지 않게 크기 제한
+        # 3. [핵심] 편집창이 화면 밖으로 나가지 않게 이미지 크기를 미리 줄임
+        # 가로 400픽셀을 기준으로 비율에 맞춰 축소
+        max_width = 400
+        if img.width > max_width:
+            ratio = max_width / float(img.width)
+            new_height = int(float(img.height) * float(ratio))
+            img = img.resize((max_width, new_height), PIL.Image.Resampling.LANCZOS)
+
         st.write("#### ✂️ 문제 영역 선택")
         st.info("빨간 사각형을 조절해 문제만 가둬주세요!")
         
-        # canvas_size를 400으로 제한하여 모바일 화면에 쏙 들어가게 만듭니다.
+        # 에러를 일으켰던 canvas_size를 빼고 실행합니다.
         final_image = st_cropper(
             img, 
             realtime_update=True, 
             box_color='#FF0000', 
             aspect_ratio=None, 
-            return_type='image',
-            canvas_size=400 # 이 설정이 화면 탈출을 막아줍니다!
+            return_type='image'
         )
         
         if final_image:
-            st.image(final_image, caption="이 영역을 분석합니다", width=200)
+            st.write("▼ 편집된 이미지 확인")
+            st.image(final_image, width=200)
 
     # --- 🤖 문제 풀기 실행 ---
     if final_image and api_key:
@@ -81,6 +87,7 @@ with col1:
             final_image.save(img_bytes, format='PNG')
             current_img_data = img_bytes.getvalue()
             
+            # 중복 실행 방지
             if st.session_state.last_processed_image != current_img_data:
                 with st.spinner("🔍 선생님이 문제를 분석 중..."):
                     try:
@@ -93,8 +100,9 @@ with col1:
                         st.session_state.current_image = final_image
                         st.session_state.last_processed_image = current_img_data
                     except Exception as e:
-                        st.error(f"오류: {e}")
+                        st.error(f"오류가 발생했습니다: {e}")
 
+    # 결과 출력
     if st.session_state.current_solution:
         st.divider()
         st.subheader("💡 해설지")
@@ -116,6 +124,7 @@ with col2:
             with st.expander(f"📌 문제 {len(st.session_state.history) - i}"):
                 st.image(item["image"], use_column_width=True)
                 st.markdown(item["solution"])
+
 
 
 
